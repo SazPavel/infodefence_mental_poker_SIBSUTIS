@@ -52,6 +52,9 @@ void print_card(int card, int x, int y)
                     case 0:
                         printf("K");
                         break;
+                    case 1:
+                        printf("A");
+                        break;
                     case 11:
                         printf("J");
                         break;
@@ -90,6 +93,9 @@ void print_card(int card, int x, int y)
                     {
                     case 0:
                         printf("K");
+                        break;
+                    case 1:
+                        printf("A");
                         break;
                     case 11:
                         printf("J");

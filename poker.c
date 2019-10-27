@@ -227,6 +227,8 @@ int main(int argc, char *argv[])
                     fprintf(fout, "%d ", new_cards[l]);
                 fprintf(fout, "\n\n");
 #endif
+                memset(filename, '\0', LENGTH);
+                sprintf(filename, "%s%d%s", "tmp", player, "/cards_temp_crypt");
                 poker_save_cards(new_cards, new_size, filename);
             }
         }
@@ -241,7 +243,7 @@ int main(int argc, char *argv[])
                     fprintf(fout, "%d ", new_cards[l]);
                 fprintf(fout, "\n\n");
 #endif
-        system("clear");      
+        system("clear");
         for(j = 0; j < new_size; j++)
             print_card(new_cards[j], j*12 + 1, 1);
         break;
