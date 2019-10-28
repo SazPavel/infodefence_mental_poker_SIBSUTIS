@@ -101,6 +101,58 @@ void poker_load_cards(int *cards, int size, char *filename)
     fclose(fout);
 }
 
+void crypt_cards(int size, int player, int_least64_t p)
+{
+    char filename[LENGTH];
+    int cards[size];
+    int_least64_t c, d;
+#if LOG
+    FILE *fout = file_open("tmp/log", "a");
+    int l;
+#endif
+    poker_load_cards(cards, size, "tmp/cards");
+    memset(filename, '\0', LENGTH);
+    sprintf(filename, "%s%d%s", "tmp", player+1, "/keys");
+    poker_load_key(&c, &d, filename);
+    poker_cards_crypt(cards, size, c, p);
+#if LOG
+    fprintf(fout, "%d %s\n", player+1, "player crypt cards");
+    for(l = 0; l < size; l++)
+        fprintf(fout, "%d ", cards[l]);
+    fprintf(fout, "\n\n");
+#endif
+    poker_cards_rand(cards, size);
+#if LOG
+    fprintf(fout, "%d %s\n", player+1, "player shuffle cards");
+    for(l = 0; l < size; l++)
+        fprintf(fout, "%d ", cards[l]);
+    fprintf(fout, "\n\n");
+#endif
+    poker_save_cards(cards, size, "tmp/cards");
+#if LOG
+    fclose(fout);
+#endif
+}
+
+void generate_cd(int player, int_least64_t p)
+{
+    int_least64_t c, d;
+    char filename[LENGTH];
+#if LOG
+    FILE *fout = file_open("tmp/log", "a");
+#endif
+    memset(filename, '\0', LENGTH);
+    poker_sign_generate(p-1, &c, &d);
+#if LOG
+    fprintf(fout, "%s %d %s %"PRId64 " %s %"PRId64"\n", "player:", player+1, "c:", c, "d:", d);
+#endif
+    sprintf(filename, "%s%d%s", "tmp", player+1, "/keys");
+    poker_save_key(c, d, filename);
+#if LOG
+    fclose(fout);
+#endif
+}
+
 int main(int argc, char *argv[])
 {
     setlocale (LC_ALL, "Rus");
@@ -131,6 +183,7 @@ int main(int argc, char *argv[])
         }
         //generate cards
         poker_cards_generate(cards, size);
+
 #if LOG
         fprintf(fout, "%s\n", "original cards:");
         for(l = 0; l < size; l++)
@@ -146,43 +199,20 @@ int main(int argc, char *argv[])
         fprintf(fout, "%s %"PRId64"\n", "prime:", p);
 #endif
         poker_save_cards(cards, size, "tmp/cards");
-        poker_save_cards(cards, size, "tmp/nocryptcards");
+        //poker_save_cards(cards, size, "tmp/nocryptcards");
 
         //generate c d
         for(i = 0; i < num_of_player; i++)
         {
-            memset(filename, '\0', LENGTH);
-            poker_sign_generate(p-1, &c, &d);
-#if LOG
-            fprintf(fout, "%s %d %s %"PRId64 " %s %"PRId64"\n", "player:", i+1, "c:", c, "d:", d);
-#endif
-            sprintf(filename, "%s%d%s", "tmp", i+1, "/keys");
-            poker_save_key(c, d, filename);
+            generate_cd(i, p);
         }
 
         //crypt cards
         for(i = 0; i < num_of_player; i++)
         {
-            poker_load_cards(cards, size, "tmp/cards");
-            memset(filename, '\0', LENGTH);
-            sprintf(filename, "%s%d%s", "tmp", i+1, "/keys");
-            poker_load_key(&c, &d, filename);
-            poker_cards_crypt(cards, size, c, p);
-#if LOG
-            fprintf(fout, "%d %s\n", i+1, "player crypt cards");
-            for(l = 0; l < size; l++)
-                fprintf(fout, "%d ", cards[l]);
-            fprintf(fout, "\n\n");
-#endif
-            poker_cards_rand(cards, size);
-#if LOG
-            fprintf(fout, "%d %s\n", i+1, "player shuffle cards");
-            for(l = 0; l < size; l++)
-                fprintf(fout, "%d ", cards[l]);
-            fprintf(fout, "\n\n");
-#endif
-            poker_save_cards(cards, size, "tmp/cards");
+            crypt_cards(size, i, p);
         }
+
         poker_load_cards(cards, size, "tmp/cards");
         
         //separation cards
@@ -238,10 +268,10 @@ int main(int argc, char *argv[])
         poker_load_key(&c, &d, tmp_filename);
         poker_cards_crypt(new_cards, new_size, d, p);
 #if LOG
-                fprintf(fout, "%d %s\n", player, "player decrypt deck");
-                for(l = 0; l < new_size; l++)
-                    fprintf(fout, "%d ", new_cards[l]);
-                fprintf(fout, "\n\n");
+        fprintf(fout, "%d %s\n", player, "player decrypt deck");
+        for(l = 0; l < new_size; l++)
+            fprintf(fout, "%d ", new_cards[l]);
+        fprintf(fout, "\n\n");
 #endif
         system("clear");
         for(j = 0; j < new_size; j++)
