@@ -248,5 +248,8 @@ int main(int argc, char *argv[])
             print_card(new_cards[j], j*12 + 1, 1);
         break;
     }
+#if LOG
+    fclose(fout);
+#endif
     exit(0);
 }
